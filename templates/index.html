@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Indices</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; }
+        #sidebar { width: 30%; padding: 10px; border-right: 2px solid #ddd; }
+        #chart-container { width: 70%; padding: 10px; }
+        ul { list-style-type: none; padding: 0; }
+        li { cursor: pointer; padding: 5px; border-bottom: 1px solid #ddd; }
+        li:hover { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h3>Stock Indices</h3>
+        <ul id="indexList"></ul>
+    </div>
+    <div id="chart-container">
+        <canvas id="indexChart"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/api/indices')
+                .then(response => response.json())
+                .then(indices => {
+                    const list = document.getElementById("indexList");
+                    indices.forEach(index => {
+                        const li = document.createElement("li");
+                        li.textContent = index;
+                        li.onclick = () => loadChart(index);
+                        list.appendChild(li);
+                    });
+                });
+
+            function loadChart(indexName) {
+                fetch(`/api/index/${indexName}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const dates = data.map(d => d.index_date);
+                        const values = data.map(d => d.closing_index_value);
+
+                        const ctx = document.getElementById("indexChart").getContext("2d");
+                        if (window.myChart) window.myChart.destroy();
+                        window.myChart = new Chart(ctx, {
+                            type: "line",
+                            data: {
+                                labels: dates,
+                                datasets: [{
+                                    label: indexName,
+                                    data: values,
+                                    borderColor: "blue",
+                                    fill: false
+                                }]
+                            }
+                        });
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
